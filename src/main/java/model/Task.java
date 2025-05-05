@@ -21,6 +21,15 @@ public class Task implements Serializable {
         this.completed = false;
     }
 
+    public Task() {
+        this.id = UUID.randomUUID();
+        this.title = "";
+        this.description = "";
+        this.priority = TaskPriority.LOW;
+        this.dueDate = LocalDate.now();
+        this.completed = false;
+    }
+
     // Геттеры и сеттеры
 
     public UUID getId() { return id; }
@@ -28,6 +37,7 @@ public class Task implements Serializable {
     public String getTitle() { return title; }
     public boolean isCompleted() { return completed; }
     public void markCompleted() { this.completed = true; }
+    public LocalDate getDueDate() { return dueDate; }
 
     @Override
     public String toString() {

@@ -1,25 +1,31 @@
 import model.Task;
 import model.TaskPriority;
 import service.TaskManager;
+import service.TaskReminder;
 import util.FileUtils;
+import util.JsonUtils;
 
 import java.time.LocalDate;
 import java.util.Scanner;
 import java.util.UUID;
+import java.io.IOException;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final TaskManager manager = new TaskManager();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         while (true) {
             System.out.println("\nМеню:");
             System.out.println("1. Добавить задачу");
             System.out.println("2. Показать все задачи");
             System.out.println("3. Завершить задачу");
-            System.out.println("4. Сохранить в файл");
-            System.out.println("5. Загрузить из файла");
-            System.out.println("6. Выход");
+            System.out.println("4. Запустить напоминалку");
+            System.out.println("5. Сохранить в файл");
+            System.out.println("6. Загрузить из файла");
+            System.out.println("7. Сохранить в JSON");
+            System.out.println("8. Загрузить из JSON");
+            System.out.println("9. Выход");
             System.out.print("Выберите действие: ");
             String input = scanner.nextLine();
 
@@ -27,9 +33,12 @@ public class Main {
                 case "1" -> addTask();
                 case "2" -> showTasks();
                 case "3" -> completeTask();
-                case "4" -> save();
-                case "5" -> load();
-                case "6" -> System.exit(0);
+                case "4" -> startReminder();
+                case "5" -> saveToFile();
+                case "6" -> loadFile();
+                case "7" -> saveToJson();
+                case "8" -> loadFromJson();
+                case "9" -> System.exit(0);
                 default -> System.out.println("Неверный ввод");
             }
         }
@@ -67,7 +76,22 @@ public class Main {
         manager.markAsCompleted(id);
     }
 
-    private static void save() {
+    private static void startReminder() {
+        // Запускаем напоминалку
+        TaskReminder reminder = new TaskReminder(manager.getAllTasks(), 5); // каждые 5 секунд
+        // напоминалка будет проверять задачи которые не завершены и осталисось меньше 1 дня
+        reminder.start();
+
+        // Оставляем работать, иначе программа завершится сразу
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            System.out.println("Поток был прерван: " + e.getMessage());
+        }
+        reminder.stop();
+    }
+
+    private static void saveToFile() {
         try {
             FileUtils.saveTasks(manager.getAllTasks(), "tasks.dat");
             System.out.println("Сохранено.");
@@ -76,9 +100,30 @@ public class Main {
         }
     }
 
-    private static void load() {
+    private static void loadFile() {
         try {
             var loaded = FileUtils.loadTasks("tasks.dat");
+            for (Task task : loaded) {
+                manager.addTask(task);
+            }
+            System.out.println("Загружено.");
+        } catch (Exception e) {
+            System.out.println("Ошибка загрузки: " + e.getMessage());
+        }
+    }
+
+    private static void saveToJson() {
+        try {
+            JsonUtils.saveToJson(manager.getAllTasks(), "tasks.json");
+            System.out.println("Сохранено.");
+        } catch (Exception e) {
+            System.out.println("Ошибка сохранения: " + e.getMessage());
+        }
+    }
+
+    private static void loadFromJson() {
+        try {
+            var loaded = JsonUtils.loadFromJson("tasks.json");
             for (Task task : loaded) {
                 manager.addTask(task);
             }
